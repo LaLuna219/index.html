@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Free Passes – Attendance Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@700;800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#F3F4F8;--card:#FFFFFF;--ink:#0D1224;--muted:#5E667A;--line:#DDE1EA;
+  --pass:#FFCF3F;--pass-ink:#3A2B00;--hero:#24208F;--hero-2:#3A35C4;
+  --go:#0E9F6E;--go-bg:#DCF5EA;--mid:#B36B00;--mid-bg:#FDEBC8;--stop:#D6303A;--stop-bg:#FBE0E2;--accent:#24208F;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0B0F1C;--card:#151B2E;--ink:#EEF1FA;--muted:#9AA3BA;--line:#262E47;
+  --pass:#FFCF3F;--pass-ink:#3A2B00;--hero:#2B27A8;--hero-2:#4640D8;
+  --go:#3ED9A0;--go-bg:#11362B;--mid:#F2B84B;--mid-bg:#3B2C0F;--stop:#FF7B84;--stop-bg:#411A1F;--accent:#A9A6FF;}}
+:root[data-theme="dark"]{
+  --bg:#0B0F1C;--card:#151B2E;--ink:#EEF1FA;--muted:#9AA3BA;--line:#262E47;
+  --pass:#FFCF3F;--pass-ink:#3A2B00;--hero:#2B27A8;--hero-2:#4640D8;
+  --go:#3ED9A0;--go-bg:#11362B;--mid:#F2B84B;--mid-bg:#3B2C0F;--stop:#FF7B84;--stop-bg:#411A1F;--accent:#A9A6FF;}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Instrument Sans',system-ui,sans-serif;-webkit-text-size-adjust:100%}
+h1,h2,h3,.num{font-family:'Bricolage Grotesque',system-ui,sans-serif;margin:0;letter-spacing:-.02em}
+button{font:inherit;color:inherit;cursor:pointer}
+button:disabled{opacity:.4;cursor:default}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto;padding:14px 14px 70px}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+header h1{font-size:22px;font-weight:800;display:flex;align-items:center;gap:8px}
+.logo{display:inline-block;width:26px;height:18px;border-radius:4px;background:var(--pass);position:relative;transform:rotate(-8deg)}
+.logo:before,.logo:after{content:"";position:absolute;top:50%;width:8px;height:8px;margin-top:-4px;border-radius:50%;background:var(--bg)}
+.logo:before{left:-4px}.logo:after{right:-4px}
+.pill{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600}
+.tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px;margin-bottom:14px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.tabs button{flex:1;border:0;background:none;padding:10px 6px;border-radius:10px;font-weight:600;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:12px}
+.sub{color:var(--muted);font-size:13px}
+.note{font-size:13px;color:var(--muted)}
+.goal{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.goal b{font-size:14px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:none;padding:8px 14px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 12px;font-weight:600}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.danger{color:var(--stop)}
+
+/* free-pass ticket token: the signature visual */
+.tk{display:inline-block;width:13px;height:17px;border-radius:3px;margin:0 3px 4px 0;flex:none}
+.tk.pass{background:radial-gradient(circle at 0 50%,var(--card) 2.4px,transparent 2.9px),radial-gradient(circle at 100% 50%,var(--card) 2.4px,transparent 2.9px),var(--pass)}
+.tk.att{background:var(--ink);opacity:.85;height:17px}
+.tk.bad{background:var(--stop);opacity:.8}
+.tk.done{background:var(--line)}
+
+/* hero: what to do next */
+.hero{background:linear-gradient(160deg,var(--hero),var(--hero-2));color:#fff;border:0;padding:18px}
+.hero .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.hero .lbl{font-size:13px;opacity:.85}
+.hero .arrows button{border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.12);color:#fff;width:34px;height:34px;border-radius:50%;font-size:16px}
+.hero h2{font-size:26px;font-weight:800;line-height:1.1;margin:6px 0 14px}
+.hrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid rgba(255,255,255,.18)}
+.hrow .t{font-size:12px;opacity:.75;width:42px;flex:none}
+.hrow .n{flex:1;font-weight:600;min-width:0}
+.verdict{flex:none;border-radius:8px;padding:4px 10px;font-weight:700;font-size:13px}
+.verdict.skip{background:var(--pass);color:var(--pass-ink)}
+.verdict.att{background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.4)}
+.summary{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px}
+.sum{border-radius:999px;padding:5px 12px;font-weight:700;font-size:13px}
+.s-go{background:var(--go-bg);color:var(--go)}.s-mid{background:var(--mid-bg);color:var(--mid)}.s-stop{background:var(--stop-bg);color:var(--stop)}
+
+/* subject card */
+.sc-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.sc-top h3{font-size:17px;font-weight:700}
+.now{font-size:13px;color:var(--muted);text-align:right}
+.now b{color:var(--ink);font-size:15px}
+.bigrow{display:flex;align-items:baseline;gap:10px;margin:8px 0 8px}
+.big{font-size:52px;font-weight:800;line-height:1}
+.biglbl{font-weight:600;line-height:1.2}
+.c-go{color:var(--go)}.c-mid{color:var(--mid)}.c-stop{color:var(--stop)}
+.tokens{display:flex;flex-wrap:wrap;margin:6px 0 8px}
+.explain{font-size:14px}
+.alt{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:13px;color:var(--muted)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:2px 0 12px}
+.legend span{display:flex;align-items:center}
+.legend .tk{margin:0 6px 0 0}
+
+/* planner */
+.badge{display:inline-block;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:700}
+.b-go{background:var(--go-bg);color:var(--go)}.b-mid{background:var(--mid-bg);color:var(--mid)}.b-stop{background:var(--stop-bg);color:var(--stop)}
+.wkbar{display:flex;justify-content:space-between;align-items:center;margin:8px 0 10px;gap:8px}
+.day{border-top:1px solid var(--line);padding:12px 0}
+.dayhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1.5px solid var(--line);background:var(--card);border-radius:10px;padding:6px 10px;text-align:left;min-width:0}
+.chip small{display:block;font-size:11px;color:var(--muted)}
+.chip strong{font-size:13px;font-weight:600;display:block;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chip.safe{background:var(--pass);border-color:var(--pass);color:var(--pass-ink)}
+.chip.safe small{color:var(--pass-ink);opacity:.75}
+.chip.must{border-color:var(--ink);border-style:solid}
+.chip.skip{border-color:var(--stop);background:var(--stop-bg)}
+.chip.skip strong{text-decoration:line-through}
+.hol{font-size:12px;color:var(--muted);font-style:italic}
+.step{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);gap:8px}
+.step:first-of-type{border-top:0}
+.step .ctl{display:flex;align-items:center;gap:10px}
+.step .ctl button{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:var(--bg);font-size:18px;font-weight:700}
+.step .ctl span{min-width:22px;text-align:center;font-weight:700}
+label{display:block;font-weight:600;margin:12px 0 6px;font-size:14px}
+select,input[type=date],textarea{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:10px;font:inherit}
+textarea{min-height:110px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+.tt{width:100%;border-collapse:collapse;font-size:12px}
+.tt th,.tt td{border:1px solid var(--line);padding:4px;text-align:center}
+.wide{overflow-x:auto}
+.warnbox,.okbox{border-radius:10px;padding:10px 12px;font-weight:600;font-size:14px;margin-bottom:10px}
+.warnbox{background:var(--stop-bg);color:var(--stop)}.okbox{background:var(--go-bg);color:var(--go)}
+.empty{text-align:center;padding:30px 10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="logo"></span>Free Passes</h1>
+    <button class="pill" id="themeBtn" aria-label="Toggle light or dark theme">Theme</button>
+  </header>
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-tab="dash" aria-selected="true">Dashboard</button>
+    <button role="tab" data-tab="plan" aria-selected="false">Leave planner</button>
+    <button role="tab" data-tab="setup" aria-selected="false">Setup</button>
+  </nav>
+  <main id="view"></main>
+</div>
+
+<script>
+const START='2026-08-29', END='2026-11-29';
+const DAYN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const TIMES=['09:00','10:00','11:00','12:00','14:00'];
+const SECTIONS=['A','B','C','D','E','F','G','H','I','J'];
+const POOL=['Engineering Maths','Data Structures','Database Systems','Operating Systems','Computer Networks','Discrete Maths','Physics','Software Engineering','Digital Logic','Probability & Stats','Communication Skills','Lab Practicals'];
+const DEFAULT_HOLIDAYS=['2026-10-02','2026-10-20','2026-11-24'];
+const KEY='free-passes-v2';
+
+let S={sec:'A',target:75,todayOv:'',past:{},plan:{},holidays:DEFAULT_HOLIDAYS.join(', '),custom:{},tab:'dash',wk:0,nd:0};
+try{const r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r));}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+/* dates (UTC-safe) */
+const D=s=>new Date(s+'T00:00:00Z');
+const iso=d=>d.toISOString().slice(0,10);
+const addDays=(s,n)=>{const d=D(s);d.setUTCDate(d.getUTCDate()+n);return iso(d)};
+const fmt=s=>{const d=D(s);return DAYN[d.getUTCDay()]+' '+d.getUTCDate()+' '+d.toLocaleString('en',{month:'short',timeZone:'UTC'})};
+function localToday(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')}
+function today(){let t=S.todayOv||localToday();if(t>END)t=END;return t}
+function holidaySet(){return new Set(S.holidays.split(/[\s,]+/).filter(x=>/^\d{4}-\d{2}-\d{2}$/.test(x)))}
+
+/* timetables: 10 generated samples + CSV import */
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function genTT(i){
+  const r=rng(1000+i*77);
+  const rest=POOL.slice(1);const uniq=[POOL[0]];
+  for(let k=0;k<6;k++){const c=rest[(i*2+k*3)%rest.length];if(!uniq.includes(c))uniq.push(c)}
+  while(uniq.length<7){const p=POOL.find(x=>!uniq.includes(x));uniq.push(p)}
+  const counts=[5,4,4,4,4,4,3];
+  const slots=[];for(let d=1;d<=5;d++)for(let p=0;p<5;p++)slots.push([d,p]);for(let p=0;p<3;p++)slots.push([6,p]);
+  let best=null;
+  for(let a=0;a<300;a++){
+    const seq=[];uniq.forEach((s,k)=>{for(let c=0;c<counts[k];c++)seq.push(s)});
+    for(let k=seq.length-1;k>0;k--){const j=Math.floor(r()*(k+1));[seq[k],seq[j]]=[seq[j],seq[k]]}
+    const tt={1:[],2:[],3:[],4:[],5:[],6:[]};slots.forEach(([d,p],k)=>tt[d][p]=seq[k]);
+    best=tt;let ok=true;for(let d=1;d<=6;d++){if(new Set(tt[d]).size!==tt[d].length){ok=false;break}}
+    if(ok)break;
+  }
+  return best;
+}
+const GEN=SECTIONS.map((_,i)=>genTT(i));
+function getTT(){return S.custom[S.sec]||GEN[SECTIONS.indexOf(S.sec)]}
+function parseCSV(txt){
+  const map={mon:1,tue:2,wed:3,thu:4,fri:5,sat:6};const rows={1:[],2:[],3:[],4:[],5:[],6:[]};let n=0;
+  txt.split(/\n/).forEach(l=>{const p=l.split(',').map(x=>x.trim());if(p.length<3)return;
+    const d=map[p[0].slice(0,3).toLowerCase()];if(!d)return;rows[d].push({t:p[1],s:p.slice(2).join(',').trim()});n++});
+  if(!n)return null;
+  const out={};for(let d=1;d<=6;d++)out[d]=rows[d].sort((a,b)=>a.t.localeCompare(b.t)).map(x=>x.s);
+  return out;
+}
+
+/* core maths */
+function calc(){
+  const tt=getTT(),t=today(),hol=holidaySet(),plan=new Set(S.plan[S.sec]||[]),past=S.past[S.sec]||{};
+  const m={},days=[];
+  for(let d=START;d<=END;d=addDays(d,1)){
+    const dow=D(d).getUTCDay();if(dow===0)continue;
+    const isHol=hol.has(d);const list=isHol?[]:(tt[dow]||[]);
+    if(d>=t)days.push({d,isHol,list});
+    list.forEach((sub,i)=>{
+      const o=m[sub]||(m[sub]={name:sub,H:0,R:0,skips:0});
+      if(d<t)o.H++;else{o.R++;if(plan.has(d+'|'+i))o.skips++}
+    });
+  }
+  const arr=Object.values(m).sort((a,b)=>a.name.localeCompare(b.name));
+  arr.forEach(o=>{o.abs=Math.min(past[o.name]||0,o.H);o.A=o.H-o.abs;o.T=o.H+o.R});
+  return {subs:arr,days,plan};
+}
+const pc=(a,b)=>b?100*a/b:100;
+function analyse(o,p){
+  const cur=pc(o.A,o.H),best=pc(o.A+o.R,o.T);
+  const need=Math.max(0,Math.ceil(p*o.T-o.A-1e-9));
+  const recover=(o.H&&o.A/o.H<p-1e-9)?Math.ceil((p*o.H-o.A)/(1-p)-1e-9):0;
+  const inDet=o.H>0&&cur<p*100-1e-9;
+  const reachable=best>=p*100-1e-9;
+  // free passes: classes you may skip; zero if you're currently below the line
+  const passes=(!reachable||inDet)?0:Math.max(0,o.R-need);
+  return {cur,best,need,recover,inDet,reachable,passes};
+}
+function proj(o){return pc(o.A+o.R-o.skips,o.T)}
+const tone=(a,p)=>(!a.reachable||a.inDet)?'stop':a.passes<=2?'mid':'go';
+
+/* views */
+function tokens(o,a){
+  if(!a.reachable)return Array(Math.min(o.R,60)).fill('<i class="tk bad"></i>').join('');
+  return Array(a.need).fill('<i class="tk att"></i>').join('')+Array(a.passes).fill('<i class="tk pass"></i>').join('');
+}
+function subjectCard(o,p){
+  const a=analyse(o,p),tn=tone(a,p),goal=Math.round(p*100),other=goal===75?.9:.75,b=analyse(o,other);
+  let big,lbl,exp;
+  if(!o.R&&!o.H){big='–';lbl='No classes';exp=''}
+  else if(!a.reachable){big='✕';lbl=`Can't reach ${goal}% any more`;exp=`Even if you attend all ${o.R} remaining classes you finish at ${a.best.toFixed(1)}%.`}
+  else if(a.inDet){big=a.recover;lbl=`classes in a row to get out of the ${goal}% danger zone`;exp=`Attend every class until then. Overall you still need ${a.need} of the ${o.R} left.`}
+  else if(a.passes===0){big=0;lbl='free passes — attend everything';exp=`You need all ${o.R} remaining classes to stay at ${goal}%.`}
+  else{big=a.passes;lbl=a.passes===1?'free pass left':'free passes left';exp=`Attend at least <b>${a.need}</b> of the next ${o.R} classes. Skip up to <b>${a.passes}</b>.`}
+  const altTxt=!b.reachable?`For ${Math.round(other*100)}%: out of reach (best ${b.best.toFixed(1)}%).`:b.inDet?`For ${Math.round(other*100)}%: you're ${b.cur.toFixed(1)}%, attend ${b.recover} in a row to catch up.`:`For ${Math.round(other*100)}%: ${b.passes} free pass${b.passes===1?'':'es'}.`;
+  return `<section class="card"><div class="sc-top"><h3>${o.name}</h3>
+    <div class="now"><b>${o.H?a.cur.toFixed(1)+'%':'–'}</b><br>${o.A}/${o.H} attended</div></div>
+    <div class="bigrow"><span class="num big c-${tn}">${big}</span><span class="biglbl">${lbl}</span></div>
+    <div class="tokens" aria-hidden="true">${tokens(o,a)}</div>
+    <div class="explain">${exp}</div><div class="alt">${altTxt}</div></section>`;
+}
+function vDash(){
+  const {subs,days}=calc();const p=S.target/100,goal=S.target;
+  const started=today()>=START;
+  const info=subs.map(o=>({o,a:analyse(o,p)}));
+  const nGo=info.filter(x=>tone(x.a,p)==='go').length,nMid=info.filter(x=>tone(x.a,p)==='mid').length,nStop=info.filter(x=>tone(x.a,p)==='stop').length;
+  // next class day hero
+  const cd=days.filter(x=>x.list.length);
+  let hero='';
+  if(!cd.length)hero=`<section class="card empty"><h3>Semester complete</h3><p class="note">No classes left.</p></section>`;
+  else{
+    const idx=Math.min(Math.max(0,S.nd),cd.length-1),x=cd[idx];
+    const budget={};info.forEach(({o,a})=>budget[o.name]=a.passes);
+    const v=x.list.map(s=>{if(budget[s]>0){budget[s]--;return true}return false});
+    const nSkip=v.filter(Boolean).length,nAtt=v.length-nSkip;
+    const label=x.d===today()?'Today':x.d===addDays(today(),1)?'Tomorrow':fmt(x.d);
+    const head=nSkip===0?`Attend all ${nAtt} class${nAtt>1?'es':''}`:nAtt===0?`Free day. Skip all ${nSkip}`:`Skip ${nSkip}, attend ${nAtt}`;
+    hero=`<section class="card hero"><div class="top"><span class="lbl">${label} · ${fmt(x.d)} · goal ${goal}%</span>
+      <span class="arrows"><button data-a="nd" data-v="-1" aria-label="Previous class day" ${idx<=0?'disabled':''}>‹</button> <button data-a="nd" data-v="1" aria-label="Next class day" ${idx>=cd.length-1?'disabled':''}>›</button></span></div>
+      <h2>${head}</h2>
+      ${x.list.map((s,i)=>`<div class="hrow"><span class="t">${TIMES[i]}</span><span class="n">${s}</span><span class="verdict ${v[i]?'skip':'att'}">${v[i]?'Free pass':'Attend'}</span></div>`).join('')}</section>`;
+  }
+  const order=[...info].sort((x,y)=>{const r=z=>(!z.a.reachable||z.a.inDet)?-1:z.a.passes;return r(x)-r(y)});
+  return `<div class="goal"><b>Your goal</b><div class="seg" role="group" aria-label="Attendance goal">
+      <button data-a="target" data-v="75" aria-pressed="${S.target===75}">Avoid detention · 75%</button>
+      <button data-a="target" data-v="90" aria-pressed="${S.target===90}">Stay safe · 90%</button></div></div>
+    ${hero}
+    <div class="summary">${nStop?`<span class="sum s-stop">${nStop} in danger</span>`:''}${nMid?`<span class="sum s-mid">${nMid} tight</span>`:''}${nGo?`<span class="sum s-go">${nGo} comfortable</span>`:''}</div>
+    <div class="legend"><span><i class="tk pass"></i>Free pass: safe to skip</span><span><i class="tk att"></i>Must attend</span></div>
+    ${started||true?order.map(x=>subjectCard(x.o,p)).join(''):''}
+    <p class="note">Most at-risk subjects come first. Add your real absences in <b>Setup</b> so the numbers match your portal.</p>`;
+}
+
+function vPlan(){
+  const {subs,days,plan}=calc();
+  if(!days.length)return `<div class="card empty">The semester has ended. Nothing left to plan.</div>`;
+  const map={};subs.forEach(o=>map[o.name]=o);
+  const t0=days[0].d;const dowT=D(t0).getUTCDay()||7;const monday=addDays(t0,-(dowT-1));
+  const ws=addDays(monday,S.wk*7),we=addDays(ws,6);
+  const wDays=days.filter(x=>x.d>=ws&&x.d<=we);
+  const maxWk=Math.floor((D(END)-D(monday))/(7*864e5));
+  const totalSkips=subs.reduce((s,o)=>s+o.skips,0);
+  const bad=subs.filter(o=>proj(o)<75),low=subs.filter(o=>proj(o)>=75&&proj(o)<90);
+  const verdict=bad.length?`<div class="warnbox">This plan would put ${bad.map(o=>o.name).join(', ')} below 75%. That means detention. Remove some leaves.</div>`
+    :totalSkips?`<div class="okbox">Safe plan: every subject stays above 75%.${S.target===90&&low.length?` But ${low.length} would end below 90%.`:''}</div>`:'';
+  const projRows=subs.map(o=>{const v=proj(o);const c=v>=90?'go':v>=75?'mid':'stop';return `<div class="step"><span>${o.name}</span><span class="badge b-${c}">${v.toFixed(1)}%</span></div>`}).join('');
+  const dayHtml=wDays.map(x=>{
+    const chips=x.list.map((sub,i)=>{
+      const o=map[sub],key=x.d+'|'+i,skipped=plan.has(key);
+      let state;
+      if(skipped)state='skip';else{const after=pc(o.A+o.R-o.skips-1,o.T);state=after>=S.target-1e-9?'safe':'must'}
+      const lab=state==='skip'?'Skipping':state==='safe'?'Free pass':'Must attend';
+      return `<button class="chip ${state}" data-a="chip" data-k="${key}" aria-pressed="${skipped}"><small>${TIMES[i]} · ${lab}</small><strong>${sub}</strong></button>`}).join('');
+    const allSkipped=x.list.length&&x.list.every((_,i)=>plan.has(x.d+'|'+i));
+    const wholeSafe=x.list.length&&!allSkipped&&[...new Set(x.list)].every(sub=>{const o=map[sub];const c=x.list.filter((s,i)=>s===sub&&!plan.has(x.d+'|'+i)).length;return pc(o.A+o.R-o.skips-c,o.T)>=S.target-1e-9});
+    return `<div class="day"><div class="dayhead"><b>${fmt(x.d)}${x.d===today()?' · today':''}</b>
+      ${x.isHol?'<span class="hol">Holiday</span>':x.list.length?`<span>${wholeSafe?'<span class="badge b-go">Whole day is free</span> ':''}<button class="btn" data-a="day" data-d="${x.d}">${allSkipped?'Attend day':'Skip day'}</button></span>`:'<span class="hol">No classes</span>'}</div>
+      <div class="chips">${chips}</div></div>`}).join('');
+  return `<section class="card"><h3 style="font-size:19px">Test a trip or long weekend</h3>
+    <p class="note" style="margin:4px 0 10px">Tap classes to mark them skipped. Yellow means it is safe for your ${S.target}% goal.</p>
+    <div class="seg" role="group" aria-label="Goal" style="margin-bottom:10px"><button data-a="target" data-v="75" aria-pressed="${S.target===75}">75%</button><button data-a="target" data-v="90" aria-pressed="${S.target===90}">90%</button></div>
+    ${verdict}
+    <div class="wkbar"><button class="btn" data-a="wk" data-v="-1" ${S.wk<=0?'disabled':''}>‹ Prev</button><b>${fmt(ws)} – ${fmt(we)}</b><button class="btn" data-a="wk" data-v="1" ${S.wk>=maxWk?'disabled':''}>Next ›</button></div>
+    ${dayHtml||'<p class="note">No classes this week.</p>'}
+    <div style="margin-top:8px;display:flex;gap:8px;justify-content:space-between;align-items:center"><span class="note">${totalSkips} class${totalSkips===1?'':'es'} in your plan</span><button class="btn danger" data-a="clear">Clear plan</button></div>
+  </section>
+  <section class="card"><h3 style="font-size:17px">Where you'd end the semester</h3><div style="margin-top:6px">${projRows}</div></section>`;
+}
+
+function vSetup(){
+  const {subs}=calc();const tt=getTT();
+  const maxP=Math.max(...[1,2,3,4,5,6].map(d=>(tt[d]||[]).length));
+  let rows='';for(let p=0;p<maxP;p++){rows+=`<tr><td>${TIMES[p]||''}</td>`+[1,2,3,4,5,6].map(d=>`<td>${(tt[d]||[])[p]?(tt[d][p].split(' ').map(w=>w[0]).join('').slice(0,3)):'–'}</td>`).join('')+'</tr>'}
+  return `<section class="card"><h3 style="font-size:17px">Your section</h3>
+   <label for="sec">Section</label><select id="sec">${SECTIONS.map(s=>`<option ${s===S.sec?'selected':''}>${s}</option>`).join('')}</select>
+   <label for="today">Today's date <span class="note">(change it to test the semester)</span></label>
+   <input type="date" id="today" value="${today()}" min="${START}" max="${END}">
+   <div style="margin-top:8px"><button class="btn" data-a="realtoday">Use real date</button></div></section>
+  <section class="card"><h3 style="font-size:17px">Classes you've missed so far</h3>
+   <p class="note" style="margin:4px 0">Classes held come from the timetable. Enter your absences per subject.</p>
+   ${subs.map(o=>`<div class="step"><span>${o.name}<br><span class="note">${o.H} held so far</span></span><span class="ctl"><button data-a="abs" data-s="${o.name}" data-v="-1" aria-label="Fewer absences">−</button><span>${o.abs}</span><button data-a="abs" data-s="${o.name}" data-v="1" aria-label="More absences">+</button></span></div>`).join('')}
+   <div style="margin-top:8px"><button class="btn" data-a="demo">Fill demo absences</button></div>
+  </section>
+  <section class="card"><h3 style="font-size:17px">Timetable · Section ${S.sec}</h3>
+   <div class="wide"><table class="tt"><tr><th></th>${['Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<th>${d}</th>`).join('')}</tr>${rows}</table></div>
+   <p class="note">This is a sample timetable (initials shown). Paste your real one:</p>
+   <label for="csv">Timetable CSV <span class="note">day,time,subject</span></label>
+   <textarea id="csv" placeholder="Mon,09:00,Data Structures&#10;Mon,10:00,Database Systems&#10;Tue,09:00,Physics"></textarea>
+   <div id="csvmsg" class="note" style="margin-top:6px"></div>
+   <div style="display:flex;gap:8px;margin-top:8px"><button class="btn primary" data-a="csv">Import for Section ${S.sec}</button>${S.custom[S.sec]?'<button class="btn" data-a="csvreset">Use sample</button>':''}</div>
+  </section>
+  <section class="card"><h3 style="font-size:17px">Holidays</h3>
+   <label for="hol">No-class dates (YYYY-MM-DD, comma separated)</label><textarea id="hol" style="min-height:70px">${S.holidays}</textarea>
+   <p class="note">Semester runs 29 Aug to 29 Nov 2026. Sundays are off. The pre-filled holidays are samples, so edit them to match your college calendar.</p></section>
+  <button class="btn danger" data-a="reset">Reset all data</button>`;
+}
+
+const view=document.getElementById('view');
+function render(){
+  document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===S.tab));
+  view.innerHTML=S.tab==='dash'?vDash():S.tab==='plan'?vPlan():vSetup();
+  save();
+}
+document.querySelector('.tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;S.tab=b.dataset.tab;render();window.scrollTo(0,0)});
+view.addEventListener('click',e=>{
+  const b=e.target.closest('[data-a]');if(!b||b.disabled)return;const a=b.dataset.a;
+  const plan=new Set(S.plan[S.sec]||[]);
+  if(a==='chip'){const k=b.dataset.k;plan.has(k)?plan.delete(k):plan.add(k);S.plan[S.sec]=[...plan]}
+  else if(a==='day'){const d=b.dataset.d;const list=getTT()[D(d).getUTCDay()]||[];
+    const all=list.every((_,i)=>plan.has(d+'|'+i));list.forEach((_,i)=>all?plan.delete(d+'|'+i):plan.add(d+'|'+i));S.plan[S.sec]=[...plan]}
+  else if(a==='target')S.target=+b.dataset.v;
+  else if(a==='nd')S.nd=Math.max(0,S.nd+ +b.dataset.v);
+  else if(a==='wk')S.wk=Math.max(0,S.wk+ +b.dataset.v);
+  else if(a==='clear')S.plan[S.sec]=[];
+  else if(a==='abs'){const p=S.past[S.sec]=S.past[S.sec]||{};const o=calc().subs.find(x=>x.name===b.dataset.s);p[b.dataset.s]=Math.max(0,Math.min(o.H,(p[b.dataset.s]||0)+ +b.dataset.v))}
+  else if(a==='demo'){const pat=[0,1,2,3,4,6,8];const p=S.past[S.sec]={};calc().subs.forEach((o,i)=>p[o.name]=Math.min(o.H,pat[i%pat.length]))}
+  else if(a==='realtoday'){S.todayOv='';S.wk=0;S.nd=0}
+  else if(a==='csv'){const r=parseCSV(document.getElementById('csv').value);
+    if(!r){document.getElementById('csvmsg').textContent='No rows found. Use lines like: Mon,09:00,Physics';return}
+    S.custom[S.sec]=r;S.plan[S.sec]=[];S.past[S.sec]={}}
+  else if(a==='csvreset'){delete S.custom[S.sec];S.plan[S.sec]=[];S.past[S.sec]={}}
+  else if(a==='reset'){if(confirm('Erase all saved data?')){try{localStorage.removeItem(KEY)}catch(e){}location.reload();return}}
+  render();
+});
+view.addEventListener('change',e=>{
+  if(e.target.id==='sec'){S.sec=e.target.value;S.wk=0;S.nd=0;render()}
+  else if(e.target.id==='today'){const v=e.target.value;S.todayOv=v>=START&&v<=END?v:'';S.wk=0;S.nd=0;render()}
+  else if(e.target.id==='hol'){S.holidays=e.target.value;render()}
+});
+document.getElementById('themeBtn').onclick=()=>{const r=document.documentElement;const dark=r.dataset.theme?r.dataset.theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches;r.dataset.theme=dark?'light':'dark'};
+render();
+</script>
+</body>
+</html>
